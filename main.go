@@ -19,6 +19,8 @@ func Handle(e *gin.Engine) *gin.Engine{
 	e.GET("/get",Get)
 	e.GET("/shell",Shell)
 
+	e.POST("/user/key",FindUser)
+	e.GET("/user/all",AllUser)
 	e.POST("/user/login",Login)
 	e.POST("/user/add",AddUser)
 	e.POST("/user/remove",RemoveUser)
