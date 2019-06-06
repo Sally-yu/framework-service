@@ -25,6 +25,33 @@ func Handle(e *gin.Engine) *gin.Engine{
 	e.POST("/user/add",AddUser)
 	e.POST("/user/remove",RemoveUser)
 	e.POST("/user/update",UpdateUser)
+	e.POST("/user/newpwd",NewPwd)
+	e.POST("/user/authkey",AuthKey)
+
+	e.POST("/notif/new",NewNotif)
+	e.GET("/notif/all",AllNotif)
+	e.POST("/notif/remove",RemoveNotif)
+
+	e.GET("/device/all",AllDevice)
+	e.POST("/device/add",AddDevice)
+	e.POST("/device/update",UpdateDevice)
+	e.POST("/device/remove",RemoveDevice)
+	e.POST("/device/code",FindDeviceCode)
+	e.POST("/device/name",FindDeviceName)
+
+	e.GET("/template/all",AllTem)
+	e.POST("/template/add",AddTem)
+	e.POST("/template/update",UpdateTem)
+	e.POST("/template/remove",RemoveTem)
+	e.POST("/template/key",FindTem)
+
+	e.GET("/alarm/all",AllAlarm)
+
+	e.GET("/alarmStg/all",AllStg)
+	e.POST("/alarmStg/add",NewStg)
+	e.POST("/alarmStg/update",UpdateStg)
+	e.POST("/alarmStg/remove",RemoveStg)
+	e.POST("/alarmStg/key",FindStg)
 
 	return e
 }

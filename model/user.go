@@ -2,7 +2,9 @@ package model
 
 import (
 	"fmt"
+	"framework-service/crypt"
 	"github.com/google/uuid"
+	"github.com/wenzhenxi/gorsa"
 	"gopkg.in/mgo.v2/bson"
 	"goserver/database"
 	"time"
@@ -19,7 +21,7 @@ type User struct {
 	Pwd       string    `json:"password" bson:"password" form:"password"`
 	Role      string    `json:"role" bson:"role" form:"role"`
 	Signtime  time.Time `json:"signtime" bson:"signtime" form:"signtime"`
-	Logintime time.Time `json:"logintime" bson:"logintime" formL:"logintime"`
+	Logintime time.Time `json:"logintime" bson:"logintime" form:"logintime"`
 	Status    string    `json:"status" bson:"status" form:"status"` //0未激活未认证，1正常使用，2临时禁用或小黑屋
 
 	Img string `json:"img" form:"img" bson:"img"` //存储头像用
@@ -38,11 +40,15 @@ func (user *User) Insert() (bool, string) {
 	db := database.DbConnection{USERDBNAME, USERCONAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	user.Signtime = time.Now().Local() //本地时区时间。mongo存档时转为UTC，从数据库取出会自动附上时区
+	if err:=user.FindByName();err==nil{
+		return false,"用户名已存在！"
+	}
+	user.Signtime = time.Now().Local() //本地时区时间。mongo存档时转为UTC，从数据库取出会自动附上时区时差
 	user.Status = "1"
 	id, _ := uuid.NewRandom()
 	user.Key = id.String()
 
+	user.Encrypt()//密文密码存数据库
 	err := db.Collection.Insert(&user)
 	if err != nil {
 		fmt.Println(err)
@@ -62,7 +68,6 @@ func (user *User) All() (error, []User) {
 		println(err.Error())
 		return err, nil
 	}
-	defer db.CloseDB()
 	return nil, res
 }
 
@@ -116,13 +121,17 @@ func (user *User) FindByEmail() error {
 
 //用户验证，使用密码
 func (user *User) Auth() (bool, string,string) {
-	var pwd = user.Pwd
+	if b:=user.Encrypt();!b{
+		fmt.Println("验证出错")
+		return false,"验证出错",""
+	}
+	var Pwd=user.Pwd
 	if err := user.FindByName(); err != nil {
 		return false, "无效的用户名或密码",""
 	}
-	fmt.Println(pwd)
+	fmt.Println(Pwd)
 	fmt.Println(user.Pwd)
-	if string(user.Pwd) != string(pwd) {
+	if !user.ComparePwd(Pwd) {
 		return false, "无效的用户名或密码",""
 	}
 
@@ -144,6 +153,41 @@ func (user *User) Auth() (bool, string,string) {
 	return false, "",""
 }
 
+//用户验证，使用密码
+func (user *User) AuthKey() (bool, string) {
+	if b:=user.Encrypt();!b{
+		fmt.Println("验证出错")
+		return false,"验证出错"
+	}
+	var Pwd=user.Pwd
+	if err := user.FindByName(); err != nil {
+		return false, "无效的用户名或密码"
+	}
+	fmt.Println(Pwd)
+	fmt.Println(user.Pwd)
+	if !user.ComparePwd(Pwd) {
+		return false, "无效的用户名或密码"
+	}
+
+	switch user.Status {
+	case "0":
+		return false, "用户未激活或未认证"
+		break
+	case "1":
+		return true, ""
+		break
+	case "2":
+		return false, "用户暂不可用"
+		break
+	default:
+		return false, "用户信息不存在"
+		break
+	}
+
+	return false, ""
+}
+
+
 //登录更新时间
 func (user *User) Login() error {
 	user.Logintime = time.Now().Local()
@@ -160,22 +204,14 @@ func (user *User) Update() error {
 	db := database.DbConnection{USERDBNAME, USERCONAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	if user.Pwd==""{ //前台不输入密码视为不修改
-		u:=User{}
-		u.Key=user.Key
-		err:=u.FindUser()
-		if err != nil {
-			fmt.Println(err.Error())
-			return err
-		}
-		user.Pwd=u.Pwd
-	}
+	//user.Encrypt()  //仅更新普通信息时，不修改密码，user中不包含密码信息，不需加密。
 	if err := db.Collection.Update(bson.M{"key": user.Key}, user); err != nil {
 		fmt.Println(err.Error())
 		return err
 	}
 	return nil
 }
+
 
 //移除用户
 func (user *User) Remove() error {
@@ -189,10 +225,28 @@ func (user *User) Remove() error {
 	return nil
 }
 
-//用户名，手机，邮箱已使用
-func (user *User) Exist() bool {
-	name := user.FindByName() == nil
-	phone := user.FindByPhone() == nil
-	email := user.FindByEmail() == nil
-	return name || phone || email
+
+//加密 加密密码
+func (user *User) Encrypt() bool  {
+	var pubkey = crypt.PublicKey
+	pwd,err:=gorsa.PublicEncrypt(user.Pwd,pubkey)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+	fmt.Println(pwd)
+	user.Pwd=pwd
+	return true
+}
+
+//加密后的密文 解密比较。数据库存储加密字段
+func (user *User)ComparePwd(pwd string) bool{
+	var prvkey= crypt.Pirvatekey
+	userPwd,_:=gorsa.PriKeyDecrypt(user.Pwd,prvkey)
+	enPwd,_:=gorsa.PriKeyDecrypt(pwd,prvkey)
+	if string(userPwd)==string(enPwd){
+		return true
+	}else {
+		return false
+	}
 }
