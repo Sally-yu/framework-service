@@ -8,17 +8,24 @@ import (
 	"time"
 )
 
+type Condition struct {
+	Key   string  `json:"key" form:"key" bson:"key"`
+	Value float32 `json:"value" form:"value" bson:"value"`
+}
+
 type AlarmStg struct {
-	Key       string    `json:"key" form:"key" bson:"key"`
-	Name      string    `json:"name" form:"name" bson:"name"`
-	Code      string    `json:"code" form:"code" bson:"code"`
-	Time      time.Time `json:"time" form:"time" bson:"time"`
-	Device    Device    `json:"device" form:"device" bson:"device"` //设备，内含属性
-	Attribute Attribute `json:"attribute" form:"attribute" bson:"attribute"` //设备的属性
-	Condition string    `json:"condition" form:"condition" bson:"condition"` //报警条件
-	Level     string    `json:"level" form:"level" bson:"level"` //报警级别 0提醒 1警报 2严重
-	Interval  string    `json:"interval" form:"interval" bson:"interval"`
-	Note      string    `json:"note" form:"note" bson:"note"`
+	Key        string    `json:"key" form:"key" bson:"key"`
+	Name       string    `json:"name" form:"name" bson:"name"`
+	Code       string    `json:"code" form:"code" bson:"code"`
+	Time       time.Time `json:"time" form:"time" bson:"time"`
+	Device     Device    `json:"device" form:"device" bson:"device"`          //设备，内含属性
+	Attribute  Attribute `json:"attribute" form:"attribute" bson:"attribute"` //设备的属性
+	ConditionA Condition `json:"conditiona" form:"conditiona" bson:"conditiona"` //报警条件A
+	ConditionB Condition `json:"conditionb" form:"conditionb" bson:"conditionb"` //报警条件B
+	Level      string    `json:"level" form:"level" bson:"level"`             //报警级别 0提醒 1警报 2严重
+	Interval   int64   `json:"interval" form:"interval" bson:"interval"`
+	Note       string    `json:"note" form:"note" bson:"note"`
+	Status     bool      `json:"status" form:"status" bosn:"status"`
 }
 
 const stgColNAME = "alarmStgCol"
