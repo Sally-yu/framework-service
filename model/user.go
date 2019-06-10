@@ -11,20 +11,18 @@ import (
 )
 
 type User struct {
-	Key   string `json:"key" bson:"key" form:"key"`
-	Phone string `json:"phone" bson:"phone" form:"phone"`
-	Email string `json:"email" bson:"email" form:"email"`
-	Sex   string `json:"sex" bson:"sex" form:"sex"`
-	Group string `json:"group" bson:"group" form:"group"`
-
-	Uname     string    `json:"username" bson:"username" form:"username"`
-	Pwd       string    `json:"password" bson:"password" form:"password"`
-	Role      string    `json:"role" bson:"role" form:"role"`
-	Signtime  time.Time `json:"signtime" bson:"signtime" form:"signtime"`
-	Logintime time.Time `json:"logintime" bson:"logintime" form:"logintime"`
-	Status    string    `json:"status" bson:"status" form:"status"` //0未激活未认证，1正常使用，2临时禁用或小黑屋
-
-	Img string `json:"img" form:"img" bson:"img"` //存储头像用
+	Key       string `json:"key" bson:"key" form:"key"`
+	Phone     string `json:"phone" bson:"phone" form:"phone"`
+	Email     string `json:"email" bson:"email" form:"email"`
+	Sex       string `json:"sex" bson:"sex" form:"sex"`
+	Group     string `json:"group" bson:"group" form:"group"`
+	Uname     string `json:"username" bson:"username" form:"username"`
+	Pwd       string `json:"password" bson:"password" form:"password"`
+	Role      string `json:"role" bson:"role" form:"role"`
+	Signtime  string `json:"signtime" bson:"signtime" form:"signtime"`
+	Logintime string `json:"logintime" bson:"logintime" form:"logintime"`
+	Status    string `json:"status" bson:"status" form:"status"` //0未激活未认证，1正常使用，2临时禁用或小黑屋
+	Img       string `json:"img" form:"img" bson:"img"`          //存储头像用
 }
 
 const (
@@ -40,15 +38,15 @@ func (user *User) Insert() (bool, string) {
 	db := database.DbConnection{USERDBNAME, USERCONAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	if err:=user.FindByName();err==nil{
-		return false,"用户名已存在！"
+	if err := user.FindByName(); err == nil {
+		return false, "用户名已存在！"
 	}
-	user.Signtime = time.Now().Local() //本地时区时间。mongo存档时转为UTC，从数据库取出会自动附上时区时差
+	user.Signtime = time.Now().Local().Format("2006-01-02 15:04:05")
 	user.Status = "1"
 	id, _ := uuid.NewRandom()
 	user.Key = id.String()
 
-	user.Encrypt()//密文密码存数据库
+	user.Encrypt() //密文密码存数据库
 	err := db.Collection.Insert(&user)
 	if err != nil {
 		fmt.Println(err)
@@ -120,46 +118,46 @@ func (user *User) FindByEmail() error {
 }
 
 //用户验证，使用密码
-func (user *User) Auth() (bool, string,string) {
-	if b:=user.Encrypt();!b{
+func (user *User) Auth() (bool, string, string) {
+	if b := user.Encrypt(); !b {
 		fmt.Println("验证出错")
-		return false,"验证出错",""
+		return false, "验证出错", ""
 	}
-	var Pwd=user.Pwd
+	var Pwd = user.Pwd
 	if err := user.FindByName(); err != nil {
-		return false, "无效的用户名或密码",""
+		return false, "无效的用户名或密码", ""
 	}
 	fmt.Println(Pwd)
 	fmt.Println(user.Pwd)
 	if !user.ComparePwd(Pwd) {
-		return false, "无效的用户名或密码",""
+		return false, "无效的用户名或密码", ""
 	}
 
 	switch user.Status {
 	case "0":
-		return false, "用户未激活或未认证",""
+		return false, "用户未激活或未认证", ""
 		break
 	case "1":
-		return true, "",user.Key
+		return true, "", user.Key
 		break
 	case "2":
-		return false, "用户暂不可用",user.Key
+		return false, "用户暂不可用", user.Key
 		break
 	default:
-		return false, "用户信息不存在",user.Key
+		return false, "用户信息不存在", user.Key
 		break
 	}
 
-	return false, "",""
+	return false, "", ""
 }
 
 //用户验证，使用密码
 func (user *User) AuthKey() (bool, string) {
-	if b:=user.Encrypt();!b{
+	if b := user.Encrypt(); !b {
 		fmt.Println("验证出错")
-		return false,"验证出错"
+		return false, "验证出错"
 	}
-	var Pwd=user.Pwd
+	var Pwd = user.Pwd
 	if err := user.FindByName(); err != nil {
 		return false, "无效的用户名或密码"
 	}
@@ -187,10 +185,9 @@ func (user *User) AuthKey() (bool, string) {
 	return false, ""
 }
 
-
 //登录更新时间
 func (user *User) Login() error {
-	user.Logintime = time.Now().Local()
+	user.Logintime = time.Now().Local().Format("2006-01-02 15:04:05")
 	fmt.Println(user)
 	err := user.Update()
 	if err != nil {
@@ -212,7 +209,6 @@ func (user *User) Update() error {
 	return nil
 }
 
-
 //移除用户
 func (user *User) Remove() error {
 	db := database.DbConnection{USERDBNAME, USERCONAME, nil, nil, nil}
@@ -225,28 +221,27 @@ func (user *User) Remove() error {
 	return nil
 }
 
-
 //加密 加密密码
-func (user *User) Encrypt() bool  {
+func (user *User) Encrypt() bool {
 	var pubkey = crypt.PublicKey
-	pwd,err:=gorsa.PublicEncrypt(user.Pwd,pubkey)
+	pwd, err := gorsa.PublicEncrypt(user.Pwd, pubkey)
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
 	}
 	fmt.Println(pwd)
-	user.Pwd=pwd
+	user.Pwd = pwd
 	return true
 }
 
 //加密后的密文 解密比较。数据库存储加密字段
-func (user *User)ComparePwd(pwd string) bool{
-	var prvkey= crypt.Pirvatekey
-	userPwd,_:=gorsa.PriKeyDecrypt(user.Pwd,prvkey)
-	enPwd,_:=gorsa.PriKeyDecrypt(pwd,prvkey)
-	if string(userPwd)==string(enPwd){
+func (user *User) ComparePwd(pwd string) bool {
+	var prvkey = crypt.Pirvatekey
+	userPwd, _ := gorsa.PriKeyDecrypt(user.Pwd, prvkey)
+	enPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey)
+	if string(userPwd) == string(enPwd) {
 		return true
-	}else {
+	} else {
 		return false
 	}
 }

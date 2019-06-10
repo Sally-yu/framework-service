@@ -9,22 +9,22 @@ import (
 )
 
 type Device struct {
-	Key          string                 `json:"key" form:"key" bson:"key"`                            //id
-	Code         string                 `json:"code" form:"code" bson:"code"`                         //唯一编号
-	Type         string                 `json:"type" form:"type" bson:"type"`                         //类型
-	Group        string                 `json:"group" form:"group" bson:"group"`                      //分组
-	Name         string                 `json:"name" form:"name" bson:"name"`                         //名称
-	Template     DeviceTemplate         `json:"template" form:"template" bson:"template"`             //设备模板
-	Connect      string                 `json:"connect" form:"connect" bson:"connect"`                //设备连接
-	Interval     string                 `json:"interval" form:"interval" bson:"interval"`             //采样间隔
-	Model        string                 `json:"model" form:"model" form:"model"`                      //规格型号
-	GPS          string                 `json:"gps" form:"gps" bson:"gps"`                            //gps
-	Phone        string                 `json:"phone" form:"phone" bson:"phone"`                      //手机号
-	Manufacturer string                 `json:"manufacturer" form:"manufacturer" bson:"manufacturer"` //厂商
-	Status       bool                   `json:"status" form:"status" bson:"status"`                   //运行状态
-	Note         string                 `json:"note" form:"note" bson:"note"`                         //备注
-	Attrs        []Attribute            `json:"attrs" form:"attrs" bson:"attrs"`                      //设备模板字段
-	Time         time.Time              `json:"time" form:"time" bson:"time"`                         //注册时间
+	Key          string         `json:"key" form:"key" bson:"key"`                            //id
+	Code         string         `json:"code" form:"code" bson:"code"`                         //唯一编号
+	Type         string         `json:"type" form:"type" bson:"type"`                         //类型
+	Group        string         `json:"group" form:"group" bson:"group"`                      //分组
+	Name         string         `json:"name" form:"name" bson:"name"`                         //名称
+	Template     DeviceTemplate `json:"template" form:"template" bson:"template"`             //设备模板
+	Connect      string         `json:"connect" form:"connect" bson:"connect"`                //设备连接
+	Interval     string         `json:"interval" form:"interval" bson:"interval"`             //采样间隔
+	Model        string         `json:"model" form:"model" form:"model"`                      //规格型号
+	GPS          string         `json:"gps" form:"gps" bson:"gps"`                            //gps
+	Phone        string         `json:"phone" form:"phone" bson:"phone"`                      //手机号
+	Manufacturer string         `json:"manufacturer" form:"manufacturer" bson:"manufacturer"` //厂商
+	Status       bool           `json:"status" form:"status" bson:"status"`                   //运行状态
+	Note         string         `json:"note" form:"note" bson:"note"`                         //备注
+	Attrs        []Attribute    `json:"attrs" form:"attrs" bson:"attrs"`                      //设备模板字段
+	Time         string         `json:"time" form:"time" bson:"time"`                         //注册时间
 }
 
 const (
@@ -40,7 +40,7 @@ func (device *Device) Insert() (bool, string) {
 	device.Status = true
 	id, _ := uuid.NewRandom()
 	device.Key = id.String()
-	device.Time = time.Now().Local()
+	device.Time = time.Now().Local().Format("2006-01-02 15:04:05")
 	err := db.Collection.Insert(&device)
 	if err != nil {
 		fmt.Println(err)

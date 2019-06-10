@@ -9,15 +9,15 @@ import (
 )
 
 type DeviceTemplate struct {
-	Key string `json:"key" form:"key" bson:"key"`
-	Code string `json:"code" form:"code" bson:"code"`
-	Name string `json:"name" form:"name" bson:"name"`
-	Description string `json:"description" form:"description" bson:"description"`
-	Attrs []Attribute `json:"attrs" form:"attrs" bson:"attrs"`
-	Time time.Time `json:"time" form:"time" bson:"time"`
+	Key         string      `json:"key" form:"key" bson:"key"`
+	Code        string      `json:"code" form:"code" bson:"code"`
+	Name        string      `json:"name" form:"name" bson:"name"`
+	Description string      `json:"description" form:"description" bson:"description"`
+	Attrs       []Attribute `json:"attrs" form:"attrs" bson:"attrs"`
+	Time        string      `json:"time" form:"time" bson:"time"`
 }
 
-const TemColNAME  ="deviceTemCol"
+const TemColNAME = "deviceTemCol"
 
 //生成新的temp
 func (temp *DeviceTemplate) New() error {
@@ -26,7 +26,7 @@ func (temp *DeviceTemplate) New() error {
 	defer db.CloseDB()
 	id, _ := uuid.NewRandom()
 	temp.Key = id.String()
-	temp.Time=time.Now().Local()
+	temp.Time = time.Now().Local().Format("2006-01-02 15:04:05")
 	err := db.Collection.Insert(&temp)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -77,7 +77,7 @@ func (temp *DeviceTemplate) Update() error {
 	db := database.DbConnection{deviceDBNAME, TemColNAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	err := db.Collection.Update(bson.M{"key": temp.Key},temp)
+	err := db.Collection.Update(bson.M{"key": temp.Key}, temp)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -86,12 +86,12 @@ func (temp *DeviceTemplate) Update() error {
 }
 
 //全部temp
-func (temp *DeviceTemplate)All() (error,[]DeviceTemplate)  {
+func (temp *DeviceTemplate) All() (error, []DeviceTemplate) {
 	var list []DeviceTemplate
 	db := database.DbConnection{deviceDBNAME, TemColNAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	err:=db.Collection.Find(nil).All(&list)
+	err := db.Collection.Find(nil).All(&list)
 	if err != nil {
 		println(err.Error())
 		return err, nil
@@ -100,11 +100,11 @@ func (temp *DeviceTemplate)All() (error,[]DeviceTemplate)  {
 }
 
 //查找temp
-func (temp *DeviceTemplate)Find()  error {
+func (temp *DeviceTemplate) Find() error {
 	db := database.DbConnection{deviceDBNAME, TemColNAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	err:=db.Collection.Find(bson.M{"key":temp.Key}).One(&temp)
+	err := db.Collection.Find(bson.M{"key": temp.Key}).One(&temp)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err

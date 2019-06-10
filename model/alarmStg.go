@@ -17,13 +17,13 @@ type AlarmStg struct {
 	Key        string    `json:"key" form:"key" bson:"key"`
 	Name       string    `json:"name" form:"name" bson:"name"`
 	Code       string    `json:"code" form:"code" bson:"code"`
-	Time       time.Time `json:"time" form:"time" bson:"time"`
-	Device     Device    `json:"device" form:"device" bson:"device"`          //设备，内含属性
-	Attribute  Attribute `json:"attribute" form:"attribute" bson:"attribute"` //设备的属性
+	Time       string    `json:"time" form:"time" bson:"time"`
+	Device     Device    `json:"device" form:"device" bson:"device"`             //设备，内含属性
+	Attribute  Attribute `json:"attribute" form:"attribute" bson:"attribute"`    //设备的属性
 	ConditionA Condition `json:"conditiona" form:"conditiona" bson:"conditiona"` //报警条件A
 	ConditionB Condition `json:"conditionb" form:"conditionb" bson:"conditionb"` //报警条件B
-	Level      string    `json:"level" form:"level" bson:"level"`             //报警级别 0提醒 1警报 2严重
-	Interval   int64   `json:"interval" form:"interval" bson:"interval"`
+	Level      string    `json:"level" form:"level" bson:"level"`                //报警级别 0提醒 1警报 2严重
+	Interval   int64     `json:"interval" form:"interval" bson:"interval"`
 	Note       string    `json:"note" form:"note" bson:"note"`
 	Status     bool      `json:"status" form:"status" bosn:"status"`
 }
@@ -35,7 +35,7 @@ func (alarm *AlarmStg) Insert() error {
 	db := database.DbConnection{alarmDBNAME, stgColNAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	alarm.Time = time.Now().Local()
+	alarm.Time = time.Now().Local().Format("2006-01-02 15:04:05")
 	id, _ := uuid.NewRandom()
 	alarm.Key = id.String()
 	err := db.Collection.Insert(&alarm)
