@@ -7,3 +7,4 @@ type Influx struct {
 	Password     string   `json:"password" form:"password" bson:"password"`
 	Measurements []string `json:"measurements" form:"measurements" bson:"measurements"`
 }
+

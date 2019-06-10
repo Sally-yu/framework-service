@@ -7,7 +7,7 @@ import (
 
 const (
 	//MONGODB_URL = "10.24.20.71:27017"
-	MONGODB_URL="mongodb://yu:123456@10.24.20.71:27017"
+	MONGODB_URL="mongodb://admin:123456@10.24.20.71:28081" //绑定端口到28081
 )
 
 type DbConnection struct {

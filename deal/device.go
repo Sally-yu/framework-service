@@ -74,7 +74,7 @@ func UpdateDevice(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"status": true,
-			"msg":    "已更新",
+			"msg":    "设备信息已更新",
 		})
 	}
 }
