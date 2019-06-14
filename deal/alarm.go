@@ -1,10 +1,10 @@
 package deal
 
 import (
-	"fmt"
-	"framework-service/model"
-	"github.com/gin-gonic/gin"
-	"net/http"
+"fmt"
+"framework-service/model"
+"github.com/gin-gonic/gin"
+"net/http"
 )
 
 func AllAlarm(c *gin.Context) {

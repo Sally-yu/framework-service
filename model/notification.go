@@ -5,8 +5,8 @@ import (
 	"framework-service/database"
 	"github.com/google/uuid"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 	"sort"
+	"time"
 )
 
 type Notif struct {

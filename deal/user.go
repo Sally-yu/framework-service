@@ -260,3 +260,10 @@ func Decrypt(c *gin.Context) (model.User, error) {
 	}
 	return user, nil
 }
+
+func RsaKey(c *gin.Context)  {
+	c.JSON(http.StatusOK,gin.H{
+		"status":true,
+		"data":crypt.PublicKey,
+	})
+}

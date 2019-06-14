@@ -8,4 +8,5 @@ type Attribute struct {
 	Unit        string `json:"unit" form:"unit" bson:"unit"`
 	Description string `json:"description" form:"description" bson:"description"`
 	Sum         bool   `json:"sum" form:"sum" bson:"sum"`
+	Display     bool   `json:"display" form:"display" bson:"display"`
 }
