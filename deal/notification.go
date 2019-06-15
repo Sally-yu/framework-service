@@ -61,3 +61,28 @@ func RemoveNotif(c *gin.Context){
 		"msg":"已删除通知",
 	})
 }
+
+func UpdateNotif(c *gin.Context) {
+	var notif model.Notif
+	if err := c.BindJSON(&notif); err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg":    err.Error(),
+		})
+		return
+	}
+	if err := notif.Update(); err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg":    err.Error(),
+		})
+		return
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"status": true,
+			"msg":    "通知已更新",
+		})
+	}
+}

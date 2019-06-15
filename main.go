@@ -33,6 +33,7 @@ func Handle(e *gin.Engine) *gin.Engine{
 	e.POST("/notif/new",NewNotif)
 	e.GET("/notif/all",AllNotif)
 	e.POST("/notif/remove",RemoveNotif)
+	e.POST("/notif/update",UpdateNotif)
 
 	e.GET("/device/all",AllDevice)
 	e.POST("/device/add",AddDevice)
