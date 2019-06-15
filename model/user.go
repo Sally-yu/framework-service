@@ -201,7 +201,13 @@ func (user *User) Update() error {
 	db := database.DbConnection{USERDBNAME, USERCONAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	//user.Encrypt()  //仅更新普通信息时，不修改密码，user中不包含密码信息，不需加密。
+	if user.Pwd=="" {  //密码置空 不修改，原密码
+		u:=user
+		u.FindUser()
+		user.Pwd=u.Pwd
+	}else {
+		user.Encrypt() //密码填写，加密保存
+	}
 	if err := db.Collection.Update(bson.M{"key": user.Key}, user); err != nil {
 		fmt.Println(err.Error())
 		return err
