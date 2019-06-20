@@ -5,6 +5,7 @@ import (
 	"framework-service/crypt"
 	"github.com/google/uuid"
 	"github.com/wenzhenxi/gorsa"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2/bson"
 	"goserver/database"
 	"time"
@@ -18,7 +19,7 @@ type User struct {
 	Group     string `json:"group" bson:"group" form:"group"`
 	Uname     string `json:"username" bson:"username" form:"username"`
 	Pwd       string `json:"password" bson:"password" form:"password"`
-	Role      string `json:"role" bson:"role" form:"role"`
+	Role      string `json:"role" bson:"role" form:"role"` // admin user
 	Signtime  string `json:"signtime" bson:"signtime" form:"signtime"`
 	Logintime string `json:"logintime" bson:"logintime" form:"logintime"`
 	Status    string `json:"status" bson:"status" form:"status"` //0未激活未认证，1正常使用，2临时禁用或小黑屋
@@ -43,6 +44,9 @@ func (user *User) Insert() (bool, string) {
 	}
 	user.Signtime = time.Now().Local().Format("2006-01-02 15:04:05")
 	user.Status = "1"
+	if user.Role != "admin" {
+		user.Role = "user" //默认角色权限是user
+	}
 	id, _ := uuid.NewRandom()
 	user.Key = id.String()
 
@@ -201,12 +205,14 @@ func (user *User) Update() error {
 	db := database.DbConnection{USERDBNAME, USERCONAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	if user.Pwd=="" {  //密码置空 不修改，原密码
-		u:=user
+	if user.Pwd == "" { //密码置空不修改，原密码 对应用户列表修改信息时不输入密码的情况
+		u := user
 		u.FindUser()
-		user.Pwd=u.Pwd
-	}else {
-		user.Encrypt() //密码填写，加密保存
+		user.Pwd = u.Pwd
+	} else {
+		if len(user.Pwd) <= 16 {
+			user.Encrypt() //不超过16位，用户信息整个加密传输的情况，对应用户列表修改用户信息时
+		}
 	}
 	if err := db.Collection.Update(bson.M{"key": user.Key}, user); err != nil {
 		fmt.Println(err.Error())
@@ -227,10 +233,26 @@ func (user *User) Remove() error {
 	return nil
 }
 
-//加密 加密密码
+
+//
+func (user *User) AsAdmin()error  {
+	user.Role="admin"
+	err:=user.Update()
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	return nil
+}
+
+//加密 加密密码 bcrypt
 func (user *User) Encrypt() bool {
-	var pubkey = crypt.PublicKey
-	pwd, err := gorsa.PublicEncrypt(user.Pwd, pubkey)
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Pwd), bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	pwd := string(hash)  // 保存在数据库的密码，虽然每次生成都不同，只需保存一份即可
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
@@ -243,9 +265,9 @@ func (user *User) Encrypt() bool {
 //加密后的密文 解密比较。数据库存储加密字段
 func (user *User) ComparePwd(pwd string) bool {
 	var prvkey = crypt.Pirvatekey
-	userPwd, _ := gorsa.PriKeyDecrypt(user.Pwd, prvkey)
-	enPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey)
-	if string(userPwd) == string(enPwd) {
+	inPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey) //解密前台传输的密文
+	err:= bcrypt.CompareHashAndPassword([]byte(user.Pwd), []byte(inPwd)) //bcrypt比较数据库密码
+	if err==nil{
 		return true
 	} else {
 		return false

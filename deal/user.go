@@ -14,36 +14,42 @@ type EncryptData struct {
 	User string `json:"user" form:"user"`
 }
 
-//登录验证
+//登录验证，刷新token
 func Login(c *gin.Context) {
-	user, err := Decrypt(c)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	b, msg, key := user.Auth()
-	if !b { //验证不通过
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": b,
-			"msg":    msg,
-		})
-		return
-	}
-	err = user.Login()
-	if err != nil { //更新登录时间
+	data := struct {
+		Name string `json:"name" form:"name"`
+		Pwd string `json:"pwd" form:"pwd"` //加密过的密码 直接传直接存 不解密
+	}{}
+	if err := c.BindJSON(&data); err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg":    err.Error(),
-		})
+			"msg":    err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status": b,
-		"msg":    "验证成功！",
-		"data":   key,
-	})
-
+	user := model.User{}
+	user.Uname = data.Name
+	if err := user.FindByName(); err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": false,
+			"msg":    err.Error()})
+		return
+	}
+	if !user.ComparePwd(data.Pwd) {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": false,
+			"msg":    "密码错误或用户信息不存在"})
+		return
+	}
+	user.Login() //更新最后登录时间
+	user.Pwd=""
+	generateToken(c,user) //生成token
+	//c.JSON(http.StatusOK, gin.H{
+	//	"status": true,
+	//	"msg":    "验证成功",
+	//	"data":   user.Key,
+	//})
 }
 
 //校验用户key和密码是否对应
@@ -77,6 +83,7 @@ func AuthKey(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
 		"msg":    "验证成功",
+		"data":   user.Key,
 	})
 }
 
@@ -261,9 +268,9 @@ func Decrypt(c *gin.Context) (model.User, error) {
 	return user, nil
 }
 
-func RsaKey(c *gin.Context)  {
-	c.JSON(http.StatusOK,gin.H{
-		"status":true,
-		"data":crypt.PublicKey,
+func RsaKey(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status": true,
+		"data":   crypt.PublicKey,
 	})
 }
