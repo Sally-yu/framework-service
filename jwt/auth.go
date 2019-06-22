@@ -6,6 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"fmt"
+	"framework-service/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -17,38 +19,59 @@ import (
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
+		user := c.Request.Header.Get("user")
 		if token == "" {
-			c.JSON(http.StatusOK, gin.H{
+			c.JSON(http.StatusUnauthorized, gin.H{
 				"status": false,
 				"msg":    "请求未携带token，无权限访问",
 			})
 			c.Abort()
 			return
 		}
-
+		if user == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"status": false,
+				"msg":    "无法识别用户信息，无权访问",
+			})
+			c.Abort()
+			return
+		}
 		log.Print("get token: ", token)
-
+		u:=model.UserToken{}
+		u.User=user
+		u.Token=token
+		fmt.Println("usertoken:",u)
+		err:=u.Compare()
+		if err!=nil{ //验证token是否有效
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"status": false,
+				"msg":    "用户信息已失效，请重新登录",
+			})
+			c.Abort()
+			return
+		}
 		j := NewJWT()
 		// parseToken 解析token包含的信息
 		claims, err := j.ParseToken(token)
 		if err != nil {
 			if err == TokenExpired {
-				c.JSON(http.StatusOK, gin.H{
+				c.JSON(http.StatusUnauthorized, gin.H{
 					"status": false,
 					"msg":    "授权已过期",
 				})
 				c.Abort()
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusUnauthorized, gin.H{
 				"status": false,
 				"msg":    err.Error(),
 			})
 			c.Abort()
 			return
 		}
-		// 继续交由下一个路由处理,并将解析出的信息传递下去
-		c.Set("claims", claims)
+		fmt.Println("token验证通过")
+		c.Set("claims", claims) //验证通过 交由后续处理
+		//继续交由下一个路由处理,并将解析出的信息传递下去
 	}
 }
 

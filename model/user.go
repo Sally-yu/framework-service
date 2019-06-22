@@ -26,9 +26,18 @@ type User struct {
 	Img       string `json:"img" form:"img" bson:"img"`          //存储头像用
 }
 
+//用户与token的关联情况
+type UserToken struct {
+	User string `json:"user" form:"user" bson:"user"`
+	Token string `json:"token" form:"token" bson:"token"`
+	Time string `json:"time" form:"time" bson:"time"`
+}
+
 const (
 	USERDBNAME = "userdb"
 	USERCONAME = "usercol"
+	TOKENDB="tokendb"
+	TOKENCOL="tokencol"
 )
 
 //新增用户
@@ -273,3 +282,21 @@ func (user *User) ComparePwd(pwd string) bool {
 		return false
 	}
 }
+
+//更新token
+func (u *UserToken)Update()  {
+	db := database.DbConnection{TOKENDB, TOKENCOL, nil, nil, nil}
+	db.ConnDB()
+	defer db.CloseDB()
+	u.Time = time.Now().Local().Format("2006-01-02 15:04:05")
+	db.Collection.Upsert(bson.M{"user": u.User}, u)
+}
+
+func (u *UserToken)Compare() error {
+	db := database.DbConnection{TOKENDB, TOKENCOL, nil, nil, nil}
+	db.ConnDB()
+	defer db.CloseDB()
+	err:=db.Collection.Find(bson.M{"user": u.User,"token":u.Token}).One(&u)
+	return err
+}
+

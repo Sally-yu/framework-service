@@ -2,7 +2,7 @@ package deal
 
 import (
 	"fmt"
-	myjwt "framework-service/jwt"
+	"framework-service/jwt"
 	"framework-service/model"
 	"github.com/gin-gonic/gin"
 	"math/rand"
@@ -10,7 +10,7 @@ import (
 )
 
 func AllDevice(c *gin.Context) {
-	claims := c.MustGet("claims").(*myjwt.CustomClaims) //需要携带token
+	claims := c.MustGet("claims").(*jwt.CustomClaims) //header携带token
 	if claims != nil {
 		device := model.Device{}
 		err, list := device.All()
@@ -31,7 +31,7 @@ func AllDevice(c *gin.Context) {
 }
 
 func RemoveDevice(c *gin.Context) {
-	claims := c.MustGet("claims").(*myjwt.CustomClaims) //需要携带token
+	claims := c.MustGet("claims").(*jwt.CustomClaims) //需要携带token
 	if claims != nil {
 		data := struct {
 			Key string `json:"key" form:"key"`
@@ -63,7 +63,7 @@ func RemoveDevice(c *gin.Context) {
 }
 
 func UpdateDevice(c *gin.Context) {
-	claims := c.MustGet("claims").(*myjwt.CustomClaims) //需要携带token
+	claims := c.MustGet("claims").(*jwt.CustomClaims) //需要携带token
 	if claims != nil {
 		device := model.Device{}
 		if err := c.BindJSON(&device); err != nil {
@@ -91,7 +91,7 @@ func UpdateDevice(c *gin.Context) {
 }
 
 func AddDevice(c *gin.Context) {
-	claims := c.MustGet("claims").(*myjwt.CustomClaims) //需要携带token
+	claims := c.MustGet("claims").(*jwt.CustomClaims) //需要携带token
 	if claims != nil {
 		device := model.Device{}
 		if err := c.Bind(&device); err != nil {
@@ -135,60 +135,66 @@ func AddDevice(c *gin.Context) {
 }
 
 func FindDeviceCode(c *gin.Context) {
-	data := struct {
-		Code string `json:"code" form:"code"`
-	}{}
-	d := model.Device{}
-	if err := c.Bind(&data); err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": false,
-			"msg":    err.Error(),
-		})
-		return
-	}
-	d.Code = data.Code
-	if err := d.FindByCode(); err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": false,
-			"msg":    err.Error(),
-		})
-		return
-	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"status": true,
-			"data":   d,
-		})
+	claims := c.MustGet("claims").(*jwt.CustomClaims) //需要携带token
+	if claims != nil {
+		data := struct {
+			Code string `json:"code" form:"code"`
+		}{}
+		d := model.Device{}
+		if err := c.Bind(&data); err != nil {
+			fmt.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": false,
+				"msg":    err.Error(),
+			})
+			return
+		}
+		d.Code = data.Code
+		if err := d.FindByCode(); err != nil {
+			fmt.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": false,
+				"msg":    err.Error(),
+			})
+			return
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status": true,
+				"data":   d,
+			})
+		}
 	}
 }
 
 func FindDeviceName(c *gin.Context) {
-	data := struct {
-		Name string `json:"name" form:"name"`
-	}{}
-	d := model.Device{}
-	if err := c.Bind(&data); err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": false,
-			"msg":    err.Error(),
-		})
-		return
-	}
-	d.Name = data.Name
-	if err := d.FindByName(); err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": false,
-			"msg":    err.Error(),
-		})
-		return
-	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"status": true,
-			"data":   d,
-		})
+	claims := c.MustGet("claims").(*jwt.CustomClaims) //需要携带token
+	if claims != nil {
+		data := struct {
+			Name string `json:"name" form:"name"`
+		}{}
+		d := model.Device{}
+		if err := c.Bind(&data); err != nil {
+			fmt.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": false,
+				"msg":    err.Error(),
+			})
+			return
+		}
+		d.Name = data.Name
+		if err := d.FindByName(); err != nil {
+			fmt.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": false,
+				"msg":    err.Error(),
+			})
+			return
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status": true,
+				"data":   d,
+			})
+		}
 	}
 }
 
@@ -204,26 +210,29 @@ type ResData struct {
 
 //设备属性值
 func DeviceValue(c *gin.Context) {
-	data := struct {
-		Keys []string `json:"keys" form:"keys"`
-	}{}
-	if err := c.Bind(&data); err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": false,
-			"msg":    err.Error(),
+	claims := c.MustGet("claims").(*jwt.CustomClaims) //需要携带token
+	if claims != nil {
+		data := struct {
+			Keys []string `json:"keys" form:"keys"`
+		}{}
+		if err := c.Bind(&data); err != nil {
+			fmt.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status": false,
+				"msg":    err.Error(),
+			})
+			return
+		}
+		res := []Res{}
+		for k := range data.Keys {
+			r := GetAttValue(data.Keys[k])
+			res = append(res, r)
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"status": true,
+			"data":   res,
 		})
-		return
 	}
-	res := []Res{}
-	for k := range data.Keys {
-		r := GetAttValue(data.Keys[k])
-		res = append(res, r)
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"status": true,
-		"data":   res,
-	})
 }
 
 //设备属性值子方法
