@@ -24,8 +24,8 @@ func generateToken(c *gin.Context, user model.User) {
 	claims := jwt.CustomClaims{
 		jwtgo.StandardClaims{
 			NotBefore: int64(time.Now().Unix() - 1000),    // 签名生效时间
-			ExpiresAt: int64(time.Now().Unix() + 10000),
-			//ExpiresAt: int64(time.Now().Unix() + 2592000), // 过期时间 30天
+			//ExpiresAt: int64(time.Now().Unix() + 10000),
+			ExpiresAt: int64(time.Now().Unix() + 2592000), // 过期时间 30天
 			Issuer:    "Inspur-MOM",                       //签名的发行者
 		},
 	}
@@ -39,14 +39,16 @@ func generateToken(c *gin.Context, user model.User) {
 		})
 		return
 	}
-	data := LoginResult{
-		Token: token,
-		User:  user,
-	}
+
 	u:=model.UserToken{}
 	u.User=user.Key
 	u.Token=token
 	u.Update()
+	user.Pwd=""
+	data := LoginResult{
+		Token: token,
+		User:  user,
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
 		"msg":    "用户验证成功！",

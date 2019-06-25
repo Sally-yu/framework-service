@@ -24,6 +24,9 @@ func Handle(e *gin.Engine) *gin.Engine {
 
 	e.GET("/rsakey", RsaKey)
 	e.POST("/login", Login)
+	e.POST("/phone", FindPhone)
+	e.POST("/newpwd", NewPwd)
+
 
 	user := e.Group("/user")
 	user.Use(jwt.JWTAuth())
@@ -33,7 +36,6 @@ func Handle(e *gin.Engine) *gin.Engine {
 		user.POST("/add", AddUser)
 		user.POST("/remove", RemoveUser)
 		user.POST("/update", UpdateUser)
-		user.POST("/newpwd", NewPwd)
 		user.POST("/authkey", AuthKey)
 	}
 

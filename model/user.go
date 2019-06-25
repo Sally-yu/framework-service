@@ -28,16 +28,16 @@ type User struct {
 
 //用户与token的关联情况
 type UserToken struct {
-	User string `json:"user" form:"user" bson:"user"`
+	User  string `json:"user" form:"user" bson:"user"`
 	Token string `json:"token" form:"token" bson:"token"`
-	Time string `json:"time" form:"time" bson:"time"`
+	Time  string `json:"time" form:"time" bson:"time"`
 }
 
 const (
 	USERDBNAME = "userdb"
 	USERCONAME = "usercol"
-	TOKENDB="tokendb"
-	TOKENCOL="tokencol"
+	TOKENDB    = "tokendb"
+	TOKENCOL   = "tokencol"
 )
 
 //新增用户
@@ -219,9 +219,13 @@ func (user *User) Update() error {
 		u.FindUser()
 		user.Pwd = u.Pwd
 	} else {
-		if len(user.Pwd) <= 16 {
-			user.Encrypt() //不超过16位，用户信息整个加密传输的情况，对应用户列表修改用户信息时
+		if len(user.Pwd) > 16 {
+			inPwd, _ := gorsa.PriKeyDecrypt(user.Pwd, crypt.Pirvatekey) //解密前台传输的密文
+			user.Pwd = string(inPwd)
+		} else if len(user.Pwd) >= 6 && len(user.Pwd) <= 16 {
+
 		}
+		user.Encrypt()
 	}
 	if err := db.Collection.Update(bson.M{"key": user.Key}, user); err != nil {
 		fmt.Println(err.Error())
@@ -242,26 +246,13 @@ func (user *User) Remove() error {
 	return nil
 }
 
-
-//
-func (user *User) AsAdmin()error  {
-	user.Role="admin"
-	err:=user.Update()
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-	return nil
-}
-
-//加密 加密密码 bcrypt
+//明文加密密码 bcrypt
 func (user *User) Encrypt() bool {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Pwd), bcrypt.DefaultCost)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	pwd := string(hash)  // 保存在数据库的密码，虽然每次生成都不同，只需保存一份即可
+	pwd := string(hash) // 保存在数据库的密码，虽然每次生成都不同，只需保存一份即可
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
@@ -271,12 +262,12 @@ func (user *User) Encrypt() bool {
 	return true
 }
 
-//加密后的密文 解密比较。数据库存储加密字段
+//密码比较 输入公钥加密的传输密文
 func (user *User) ComparePwd(pwd string) bool {
 	var prvkey = crypt.Pirvatekey
-	inPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey) //解密前台传输的密文
-	err:= bcrypt.CompareHashAndPassword([]byte(user.Pwd), []byte(inPwd)) //bcrypt比较数据库密码
-	if err==nil{
+	inPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey)                  //解密前台传输的密文
+	err := bcrypt.CompareHashAndPassword([]byte(user.Pwd), inPwd) //bcrypt比较数据库密码
+	if err == nil {
 		return true
 	} else {
 		return false
@@ -284,7 +275,7 @@ func (user *User) ComparePwd(pwd string) bool {
 }
 
 //更新token
-func (u *UserToken)Update()  {
+func (u *UserToken) Update() {
 	db := database.DbConnection{TOKENDB, TOKENCOL, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
@@ -292,11 +283,10 @@ func (u *UserToken)Update()  {
 	db.Collection.Upsert(bson.M{"user": u.User}, u)
 }
 
-func (u *UserToken)Compare() error {
+func (u *UserToken) Compare() error {
 	db := database.DbConnection{TOKENDB, TOKENCOL, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	err:=db.Collection.Find(bson.M{"user": u.User,"token":u.Token}).One(&u)
+	err := db.Collection.Find(bson.M{"user": u.User, "token": u.Token}).One(&u)
 	return err
 }
-

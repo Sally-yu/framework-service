@@ -43,8 +43,6 @@ func Login(c *gin.Context) {
 			"msg":    "密码错误或用户信息不存在"})
 		return
 	}
-	user.Login() //更新最后登录时间
-	user.Pwd = ""
 	generateToken(c, user) //生成token
 	//c.JSON(http.StatusOK, gin.H{
 	//	"status": true,
@@ -59,7 +57,7 @@ func AuthKey(c *gin.Context) {
 	if claims != nil {
 		data := struct {
 			Key string `json:"key" form:"key"`
-			Pwd string `json:"pwd" form:"pwd"` //加密过的密码 直接传直接存 不解密
+			Pwd string `json:"pwd" form:"pwd"`
 		}{}
 		if err := c.BindJSON(&data); err != nil {
 			fmt.Println(err.Error())
@@ -148,7 +146,38 @@ func FindUser(c *gin.Context) {
 		"status": true,
 		"data":   user,
 	})
+}
 
+//查找用户
+func FindPhone(c *gin.Context) {
+	var user model.User
+	var data struct {
+		Phone string `json:"phone" form:"phone"`
+	}
+	if err := c.Bind(&data); err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg":    err.Error(),
+		})
+		return
+	}
+	fmt.Println(data.Phone)
+	user.Phone = data.Phone
+	err := user.FindByPhone()
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg":    "未能找到该手机号码的注册信息",
+		})
+		return
+	}
+	user.Pwd = ""
+	c.JSON(http.StatusOK, gin.H{
+		"status": true,
+		"data":   user,
+	})
 }
 
 //get所有用户
@@ -197,41 +226,38 @@ func UpdateUser(c *gin.Context) {
 
 //更新用户密码
 func NewPwd(c *gin.Context) {
-	claims := c.MustGet("claims").(*jwt.CustomClaims) //header携带token
-	if claims != nil {
-		data := struct {
-			Key string `json:"key" form:"key"`
-			Pwd string `json:"pwd" form:"pwd"` //加密过的密码 直接传直接存 不解密
-		}{}
-		if err := c.BindJSON(&data); err != nil {
-			fmt.Println(err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{
-				"status": false,
-				"msg":    err.Error()})
-			return
-		}
-		user := model.User{}
-		user.Key = data.Key
-		if err := user.FindUser(); err != nil {
-			fmt.Println(err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"status": false,
-				"msg":    err.Error()})
-			return
-		}
-		user.Pwd = data.Pwd
-		if err := user.Update(); err != nil {
-			fmt.Println(err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{
-				"status": false,
-				"msg":    err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"status": true,
-			"msg":    "密码已更新"})
+	data := struct {
+		Key string `json:"key" form:"key"`
+		Pwd string `json:"pwd" form:"pwd"` //加密过的密码 直接传直接存 不解密
+	}{}
+	if err := c.BindJSON(&data); err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg":    err.Error()})
 		return
 	}
+	user := model.User{}
+	user.Key = data.Key
+	if err := user.FindUser(); err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": false,
+			"msg":    err.Error()})
+		return
+	}
+	user.Pwd = data.Pwd
+	if err := user.Update(); err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg":    err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status": true,
+		"msg":    "密码已更新"})
+	return
 }
 
 //移除用户
