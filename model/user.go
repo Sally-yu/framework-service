@@ -218,15 +218,18 @@ func (user *User) Update() error {
 		u := user
 		u.FindUser()
 		user.Pwd = u.Pwd
-	} else {
-		if len(user.Pwd) > 16 {
-			inPwd, _ := gorsa.PriKeyDecrypt(user.Pwd, crypt.Pirvatekey) //解密前台传输的密文
-			user.Pwd = string(inPwd)
-		} else if len(user.Pwd) >= 6 && len(user.Pwd) <= 16 {
-
-		}
+	}
+	if len(user.Pwd) > 60 { //bcrypt加密密文长度60  超过为传输中的非对称加密密文
+		inPwd, _ := gorsa.PriKeyDecrypt(user.Pwd, crypt.Pirvatekey) //解密前台传输的密文
+		user.Pwd = string(inPwd)
 		user.Encrypt()
 	}
+	if len(user.Pwd) >= 6 && len(user.Pwd) <= 16 {
+		user.Encrypt()
+	}
+	if len(user.Pwd) == 60 { //bcrypt加密的数据，不处理直接存 原密码
+	}
+
 	if err := db.Collection.Update(bson.M{"key": user.Key}, user); err != nil {
 		fmt.Println(err.Error())
 		return err
