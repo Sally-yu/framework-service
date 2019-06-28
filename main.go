@@ -110,7 +110,6 @@ func Handle(e *gin.Engine) *gin.Engine {
 	e.POST("/alarmStg/update", UpdateStg)
 	e.POST("/alarmStg/remove", RemoveStg)
 	e.POST("/alarmStg/key", FindStg)
-
 	return e
 }
 

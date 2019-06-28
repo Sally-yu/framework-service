@@ -160,7 +160,6 @@ func (user *User) Auth() (bool, string, string) {
 		return false, "用户信息不存在", user.Key
 		break
 	}
-
 	return false, "", ""
 }
 
@@ -194,7 +193,6 @@ func (user *User) AuthKey() (bool, string) {
 		return false, "用户信息不存在"
 		break
 	}
-
 	return false, ""
 }
 
