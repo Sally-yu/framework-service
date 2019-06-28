@@ -307,7 +307,7 @@ func Decrypt(c *gin.Context) (model.User, error) {
 		return user, err
 	}
 	fmt.Println(destr)
-	err = json.Unmarshal(destr, &user) //解析json
+	err = json.Unmarshal([]byte(destr), &user) //解析json
 	if err != nil {
 		fmt.Println(err.Error())
 		return user, err
