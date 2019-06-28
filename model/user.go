@@ -3,11 +3,11 @@ package model
 import (
 	"fmt"
 	"framework-service/crypt"
+	"framework-service/database"
 	"github.com/google/uuid"
 	"github.com/wenzhenxi/gorsa"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2/bson"
-	"goserver/database"
 	"time"
 )
 
@@ -267,7 +267,7 @@ func (user *User) Encrypt() bool {
 func (user *User) ComparePwd(pwd string) bool {
 	var prvkey = crypt.Pirvatekey
 	inPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey)                  //解密前台传输的密文
-	err := bcrypt.CompareHashAndPassword([]byte(user.Pwd), inPwd) //bcrypt比较数据库密码
+	err := bcrypt.CompareHashAndPassword([]byte(user.Pwd), []byte(inPwd)) //bcrypt比较数据库密码
 	if err == nil {
 		return true
 	} else {
