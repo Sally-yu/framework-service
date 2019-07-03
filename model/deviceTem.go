@@ -93,7 +93,7 @@ func (temp *DeviceTemplate) All() (error, []DeviceTemplate) {
 	defer db.CloseDB()
 	err := db.Collection.Find(nil).All(&list)
 	if err != nil {
-		println(err.Error())
+		fmt.Println(err.Error())
 		return err, nil
 	}
 	return nil, list

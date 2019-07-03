@@ -44,10 +44,11 @@ import (
 )
 
 func main() {
+	go FileServer()//并发一个文件服务
 	engine := gin.Default()
 	//config:=cors.Default() //源码指示允许cors
 	//engine.Use(cors.Default()) //允许cors
-	engine.Use(Cors())
+	engine.Use(Cors()) //需要header携带token，gin默认的跨域不能支持，手写
 	engine = Handle(engine)
 	engine.Run(":9060")
 }
@@ -60,7 +61,6 @@ func Handle(e *gin.Engine) *gin.Engine {
 	e.POST("/login", Login)
 	e.POST("/phone", FindPhone)
 	e.POST("/newpwd", NewPwd)
-
 
 	user := e.Group("/user")
 	user.Use(jwt.JWTAuth())

@@ -99,9 +99,9 @@ func AddUser(c *gin.Context) {
 			fmt.Println(err.Error())
 			return
 		}
-		fmt.Println(user)
+		//fmt.Println(user)
 		b, msg := user.Insert()
-		fmt.Println(msg)
+		//fmt.Println(msg)
 		if b {
 			c.JSON(http.StatusOK, gin.H{
 				"status": b,
@@ -130,7 +130,7 @@ func FindUser(c *gin.Context) {
 		})
 		return
 	}
-	fmt.Println(data.Key)
+	//fmt.Println(data.Key)
 	user.Key = data.Key
 	err := user.FindUser()
 	if err != nil {
@@ -162,7 +162,7 @@ func FindPhone(c *gin.Context) {
 		})
 		return
 	}
-	fmt.Println(data.Phone)
+	//fmt.Println(data.Phone)
 	user.Phone = data.Phone
 	err := user.FindByPhone()
 	if err != nil {
@@ -210,7 +210,7 @@ func UpdateUser(c *gin.Context) {
 			fmt.Println(err.Error())
 			return
 		}
-		fmt.Println(user)
+		//fmt.Println(user)
 		if err := user.Update(); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"status": false,

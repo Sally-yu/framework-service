@@ -140,8 +140,8 @@ func (user *User) Auth() (bool, string, string) {
 	if err := user.FindByName(); err != nil {
 		return false, "无效的用户名或密码", ""
 	}
-	fmt.Println(Pwd)
-	fmt.Println(user.Pwd)
+	//fmt.Println(Pwd)
+	//fmt.Println(user.Pwd)
 	if !user.ComparePwd(Pwd) {
 		return false, "无效的用户名或密码", ""
 	}
@@ -173,8 +173,8 @@ func (user *User) AuthKey() (bool, string) {
 	if err := user.FindByName(); err != nil {
 		return false, "无效的用户名或密码"
 	}
-	fmt.Println(Pwd)
-	fmt.Println(user.Pwd)
+	//fmt.Println(Pwd)
+	//fmt.Println(user.Pwd)
 	if !user.ComparePwd(Pwd) {
 		return false, "无效的用户名或密码"
 	}
@@ -199,7 +199,7 @@ func (user *User) AuthKey() (bool, string) {
 //登录更新时间
 func (user *User) Login() error {
 	user.Logintime = time.Now().Local().Format("2006-01-02 15:04:05")
-	fmt.Println(user)
+	//fmt.Println(user)
 	err := user.Update()
 	if err != nil {
 		return err
@@ -216,7 +216,7 @@ func (user *User) Update() error {
 		u := User{Key:user.Key}
 		u.FindUser()
 		user.Pwd = u.Pwd
-		fmt.Println("user:+",user)
+		//fmt.Println("user:+",user)
 	}
 	if len(user.Pwd) > 60 { //bcrypt加密密文长度60  超过为传输中的非对称加密密文
 		inPwd, _ := gorsa.PriKeyDecrypt(user.Pwd, crypt.Pirvatekey) //解密前台传输的密文
@@ -252,14 +252,14 @@ func (user *User) Remove() error {
 func (user *User) Encrypt() bool {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Pwd), bcrypt.DefaultCost)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err.Error())
 	}
 	pwd := string(hash) // 保存在数据库的密码，虽然每次生成都不同，只需保存一份即可
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
 	}
-	fmt.Println(pwd)
+	//fmt.Println(pwd)
 	user.Pwd = pwd
 	return true
 }
