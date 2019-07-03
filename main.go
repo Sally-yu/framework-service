@@ -102,6 +102,17 @@ func Handle(e *gin.Engine) *gin.Engine {
 		template.POST("/remove", RemoveTem)
 		template.POST("/key", FindTem)
 	}
+	//数据库管理模块的请求
+	dbMgr := e.Group("/dbMgr")  //需要验证token
+	dbMgr.Use(jwt.JWTAuth())
+	{
+		dbMgr.GET("/all",AlldbMgr)	//查询出所有的数据库数据
+		dbMgr.POST("/add",AddDbMgr)	//添加一条记录
+		dbMgr.POST("/update",UpdateDbMgr)	//更新一条记录
+		dbMgr.POST("/delete",DeleteDbMgr)	//删除一条记录
+		dbMgr.POST("/find",FindServerIp)	//查找当前ip的数据库
+		dbMgr.POST("/ping", TestPing)		//数据库测试连接
+	}
 
 	e.GET("/alarm/all", AllAlarm)
 
