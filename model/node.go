@@ -6,7 +6,7 @@ import (
 )
 
 //树节点，控制为二级树
-type Node struct {
+type TreeNode struct {
 	Title    string      `json:"title" bson:"key"`
 	Key      string      `json:"key" bson:"key"`
 	Author   string      `json:"author" bson:"author"`
@@ -14,7 +14,7 @@ type Node struct {
 	Children []ChildNode `json:"children" bson:"children"`
 }
 
-func (node *Node) Save(db database.DbConnection) error {
+func (node *TreeNode) Save(db database.DbConnection) error {
 	db.ConnDB()
 	err := db.Collection.Insert(&node)
 	if err != nil {
@@ -24,7 +24,7 @@ func (node *Node) Save(db database.DbConnection) error {
 }
 
 //返回查重结果
-func (node *Node) FindTitle(db database.DbConnection, title string) string {
+func (node *TreeNode) FindTitle(db database.DbConnection, title string) string {
 	db.ConnDB()
 	db.Collection.Find(bson.M{"Title": title}).One(&node)
 	if len(node.Title) > 0 {
@@ -34,7 +34,7 @@ func (node *Node) FindTitle(db database.DbConnection, title string) string {
 }
 
 //以key字段查找
-func (node *Node) Find(db database.DbConnection) (error, *Node) {
+func (node *TreeNode) Find(db database.DbConnection) (error, *TreeNode) {
 	db.ConnDB()
 	err := db.Collection.Find(bson.M{"key": node.Key}).One(&node)
 	if err != nil {
@@ -43,9 +43,9 @@ func (node *Node) Find(db database.DbConnection) (error, *Node) {
 	return nil, node
 }
 
-func (node *Node) FindAll(db database.DbConnection) (error, []Node) {
+func (node *TreeNode) FindAll(db database.DbConnection) (error, []TreeNode) {
 	db.ConnDB()
-	res := []Node{}
+	res := []TreeNode{}
 	err := db.Collection.Find(nil).All(&res)
 	if err != nil {
 		println(err.Error())
@@ -55,7 +55,7 @@ func (node *Node) FindAll(db database.DbConnection) (error, []Node) {
 }
 
 //以key字段删除
-func (node *Node) Remove(db database.DbConnection) error {
+func (node *TreeNode) Remove(db database.DbConnection) error {
 	db.ConnDB()
 	err := db.Collection.Remove(bson.M{"key": node.Key})
 	if err != nil {
@@ -65,7 +65,7 @@ func (node *Node) Remove(db database.DbConnection) error {
 }
 
 //以key字段更新，先删后插
-func (node *Node) Update(db database.DbConnection) error {
+func (node *TreeNode) Update(db database.DbConnection) error {
 	err := node.Remove(db)
 	if err != nil {
 		return err

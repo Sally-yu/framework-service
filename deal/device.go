@@ -119,7 +119,7 @@ func AddDevice(c *gin.Context) {
 			return
 		}
 		if b, msg := device.Insert(); !b {
-			fmt.Println(msg)
+			//fmt.Println(msg)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"status": false,
 				"msg":    msg,

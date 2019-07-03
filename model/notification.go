@@ -65,7 +65,7 @@ func (notif *Notif) Update() error {
 	db := database.DbConnection{DBNAME, CONAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB() //关闭数据库连接，不关闭会增加新的数据库连接
-	fmt.Println(notif)
+	//fmt.Println(notif)
 	err := db.Collection.Update(bson.M{"key": notif.Key}, notif)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -79,7 +79,7 @@ func (notif *Notif) Remove() error {
 	db := database.DbConnection{DBNAME, CONAME, nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB() //关闭数据库连接，不关闭会增加新的数据库连接
-	fmt.Println(notif)
+	//fmt.Println(notif)
 	err := db.Collection.Remove(bson.M{"key": notif.Key})
 	if err != nil {
 		fmt.Println(err.Error())

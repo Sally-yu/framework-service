@@ -34,7 +34,7 @@ func (alarm *Alarm) Insert() error {
 	alarm.Key = id.String()
 	err := db.Collection.Insert(&alarm)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err.Error())
 		return err
 	}
 	return nil
