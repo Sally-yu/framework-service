@@ -14,7 +14,11 @@ speed-measure-plugin.json
 
 # IDEs and editors
 /.idea
+/.idea/*
+./.idea
 .idea
+.idea/*
+.idea/
 ../idea
 ./idea/*
 /.idea/*
