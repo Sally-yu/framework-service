@@ -160,7 +160,6 @@ func (user *User) Auth() (bool, string, string) {
 		return false, "用户信息不存在", user.Key
 		break
 	}
-
 	return false, "", ""
 }
 
@@ -194,7 +193,6 @@ func (user *User) AuthKey() (bool, string) {
 		return false, "用户信息不存在"
 		break
 	}
-
 	return false, ""
 }
 
@@ -215,9 +213,10 @@ func (user *User) Update() error {
 	db.ConnDB()
 	defer db.CloseDB()
 	if user.Pwd == "" { //密码置空不修改，原密码 对应用户列表修改信息时不输入密码的情况
-		u := user
+		u := User{Key:user.Key}
 		u.FindUser()
 		user.Pwd = u.Pwd
+		fmt.Println("user:+",user)
 	}
 	if len(user.Pwd) > 60 { //bcrypt加密密文长度60  超过为传输中的非对称加密密文
 		inPwd, _ := gorsa.PriKeyDecrypt(user.Pwd, crypt.Pirvatekey) //解密前台传输的密文

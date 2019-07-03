@@ -54,6 +54,7 @@ func generateToken(c *gin.Context, user model.User) {
 		"msg":    "用户验证成功！",
 		"data":   data,
 	})
+	user.Login()
 	return
 }
 
