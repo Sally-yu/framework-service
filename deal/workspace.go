@@ -3,8 +3,8 @@ package deal
 import (
 	"encoding/json"
 	"fmt"
-	"goserver/database"
-	"goserver/model"
+	"framework-service/database"
+	"framework-service/model"
 	"io"
 	"io/ioutil"
 	"log"

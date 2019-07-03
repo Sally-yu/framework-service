@@ -1,8 +1,8 @@
 package model
 
 import (
+	"framework-service/database"
 	"gopkg.in/mgo.v2/bson"
-	"goserver/database"
 )
 
 type Svg struct {

@@ -2,8 +2,8 @@ package model
 
 import (
 	"fmt"
+	"framework-service/database"
 	"gopkg.in/mgo.v2/bson"
-	"goserver/database"
 )
 
 type Node struct {
