@@ -24,6 +24,7 @@ type User struct {
 	Logintime string `json:"logintime" bson:"logintime" form:"logintime"`
 	Status    string `json:"status" bson:"status" form:"status"` //0未激活未认证，1正常使用，2临时禁用或小黑屋
 	Img       string `json:"img" form:"img" bson:"img"`          //存储头像用
+	Index     string `json:"index" form:"index" bson:"index"`    //存储自定义首页用，为空显示原仪表主页
 }
 
 //用户与token的关联情况
@@ -53,6 +54,7 @@ func (user *User) Insert() (bool, string) {
 	}
 	user.Signtime = time.Now().Local().Format("2006-01-02 15:04:05")
 	user.Status = "1"
+	user.Index = ""
 	if user.Role != "admin" {
 		user.Role = "user" //默认角色权限是user
 	}
@@ -213,7 +215,7 @@ func (user *User) Update() error {
 	db.ConnDB()
 	defer db.CloseDB()
 	if user.Pwd == "" { //密码置空不修改，原密码 对应用户列表修改信息时不输入密码的情况
-		u := User{Key:user.Key}
+		u := User{Key: user.Key}
 		u.FindUser()
 		user.Pwd = u.Pwd
 		//fmt.Println("user:+",user)
@@ -267,7 +269,7 @@ func (user *User) Encrypt() bool {
 //密码比较 输入公钥加密的传输密文
 func (user *User) ComparePwd(pwd string) bool {
 	var prvkey = crypt.Pirvatekey
-	inPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey)                  //解密前台传输的密文
+	inPwd, _ := gorsa.PriKeyDecrypt(pwd, prvkey)                          //解密前台传输的密文
 	err := bcrypt.CompareHashAndPassword([]byte(user.Pwd), []byte(inPwd)) //bcrypt比较数据库密码
 	if err == nil {
 		return true

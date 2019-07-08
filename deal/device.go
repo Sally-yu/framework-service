@@ -5,7 +5,6 @@ import (
 	"framework-service/jwt"
 	"framework-service/model"
 	"github.com/gin-gonic/gin"
-	"math/rand"
 	"net/http"
 )
 
@@ -198,15 +197,6 @@ func FindDeviceName(c *gin.Context) {
 	}
 }
 
-type Res struct {
-	Device string     `json:"device" form:"device"`
-	Data   [] ResData `json:"data" form:"data"`
-}
-
-type ResData struct {
-	AttCode string      `json:"attcode" form:"attcode"`
-	Value   interface{} `json:"value" form:"value"`
-}
 
 //设备属性值
 func DeviceValue(c *gin.Context) {
@@ -223,7 +213,7 @@ func DeviceValue(c *gin.Context) {
 			})
 			return
 		}
-		res := []Res{}
+		res := []model.Res{}
 		for k := range data.Keys {
 			r := GetAttValue(data.Keys[k])
 			res = append(res, r)
@@ -236,17 +226,11 @@ func DeviceValue(c *gin.Context) {
 }
 
 //设备属性值子方法
-func GetAttValue(key string) Res {
-	r := Res{}
-	r.Device = key
+func GetAttValue(key string) model.Res {
+	r := model.Res{}
 	device := model.Device{}
 	device.Key = key
 	device.Find()
-	for i := range device.Attrs {
-		data := ResData{}
-		data.AttCode = device.Attrs[i].Code
-		data.Value = rand.Intn(100)
-		r.Data = append(r.Data, data)
-	}
+	r=device.GetValue()
 	return r
 }

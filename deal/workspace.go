@@ -16,23 +16,23 @@ import (
 )
 
 
-type Response struct {
+type ResponseW struct {
 	Status string
 }
 
 const (
-	path       = "/usr/local/nginx/html/assets/img"
-	uploadPath = "/usr/local/nginx/html/assets/upload"
-	Dbname     = "imgdb"
-	Cname      = "imgcollection"
-	DocDname   = "docdb"
+	path         = "/usr/local/nginx/html/assets/img"
+	uploadPath   = "/usr/local/nginx/html/assets/upload"
+	DbnameWork   = "imgdb"
+	CnameWork    = "imgcollection"
+	DocDnameWork = "docdb"
 )
 
 //const path="c:/img"
 
 //跨域头
-func CorsHeader(w http.ResponseWriter) http.ResponseWriter {
-	println("CorsHeader")
+func CorsHeaderWork(w http.ResponseWriter) http.ResponseWriter {
+	println("CorsHeaderWork")
 	w.Header().Set("Access-Control-Allow-Origin", "*")                                                      //允许访问所有域
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type,X-Requested-With,Authorization,text/html") //header的类型	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -46,7 +46,7 @@ func CorsHeader(w http.ResponseWriter) http.ResponseWriter {
 
 //上传保存图片
 func PathServer(w http.ResponseWriter, r *http.Request, p string) {
-	CorsHeader(w) //优先处理跨域，否则后续函数不会执行
+	CorsHeaderWork(w) //优先处理跨域，否则后续函数不会执行
 	if "POST" == r.Method {
 		fmt.Println(r)
 		file, handler, err := r.FormFile("file") //antd上传控件formdata中文件key为file
@@ -81,7 +81,7 @@ func PathServer(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		defer f.Close()
-		var data Response
+		var data ResponseW
 		data.Status = "success"
 		fmt.Println(filename)
 		json.NewEncoder(w).Encode(data)
@@ -91,12 +91,12 @@ func PathServer(w http.ResponseWriter, r *http.Request, p string) {
 
 //保存到数据库
 func SaveLink(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
+	CorsHeaderWork(w)
 	if "POST" == r.Method {
 		body, _ := ioutil.ReadAll(r.Body) //获取post的数据
 		var jsono map[string]string
 		json.Unmarshal(body, &jsono) //json解析
-		db := database.DbConnection{Dbname, Cname, nil, nil, nil}
+		db := database.DbConnection{DbnameWork, CnameWork, nil, nil, nil}
 		img := model.Img{jsono["deviceid"], jsono["imgurl"]}
 		err := img.Save(db)
 		if err != nil {
@@ -105,7 +105,7 @@ func SaveLink(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer r.Body.Close()
-		data := Response{}
+		data := ResponseW{}
 		data.Status = "success"
 		json.NewEncoder(w).Encode(data)
 	}
@@ -113,33 +113,33 @@ func SaveLink(w http.ResponseWriter, r *http.Request) {
 
 //返回imgurl
 func FindImg(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
+	CorsHeaderWork(w)
 	if "POST" == r.Method {
 		body, _ := ioutil.ReadAll(r.Body) //获取post的数据
 		var device map[string]string
 		json.Unmarshal(body, &device) //json解析
 		img := model.Img{device["deviceid"], ""}
-		err, _ := img.Find(database.DbConnection{Dbname, Cname, nil, nil, nil})
+		err, _ := img.Find(database.DbConnection{DbnameWork, CnameWork, nil, nil, nil})
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			fmt.Println(err.Error())
 			return
 		}
 		defer r.Body.Close()
-		data := Response{}
+		data := ResponseW{}
 		data.Status = img.Imgurl
 		json.NewEncoder(w).Encode(data)
 	}
 }
 
 func BackImg(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
+	CorsHeaderWork(w)
 	if "POST" == r.Method {
 		body, _ := ioutil.ReadAll(r.Body) //获取post的数据
 		var post map[string]string
 		json.Unmarshal(body, &post) //json解析
 		back := model.Back{}
-		err, _ := back.Find(database.DbConnection{Dbname, Cname, nil, nil, nil})
+		err, _ := back.Find(database.DbConnection{DbnameWork, CnameWork, nil, nil, nil})
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			fmt.Println(err.Error())
@@ -151,7 +151,7 @@ func BackImg(w http.ResponseWriter, r *http.Request) {
 }
 
 func WorkSpace(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
+	CorsHeaderWork(w)
 	if "POST" == r.Method {
 		body, _ := ioutil.ReadAll(r.Body) //获取post的数据
 		var post = struct {
@@ -163,23 +163,23 @@ func WorkSpace(w http.ResponseWriter, r *http.Request) {
 		var err error
 		switch post.Opt {
 		case "save": //保存
-			err = post.Workspace.Save(database.DbConnection{DocDname, "workspace", nil, nil, nil})
+			err = post.Workspace.Save(database.DbConnection{DocDnameWork, "workspace", nil, nil, nil})
 			json.NewEncoder(w).Encode(post.Workspace) //response一个workspace
 			break
 		case "find":
-			err, _ = post.Workspace.Find(database.DbConnection{DocDname, "workspace", nil, nil, nil})
+			err, _ = post.Workspace.Find(database.DbConnection{DocDnameWork, "workspace", nil, nil, nil})
 			json.NewEncoder(w).Encode(post.Workspace) //response一个workspace
 			break
 		case "all":
-			err, worklist = post.Workspace.FindAll(database.DbConnection{DocDname, "workspace", nil, nil, nil})
+			err, worklist = post.Workspace.FindAll(database.DbConnection{DocDnameWork, "workspace", nil, nil, nil})
 			json.NewEncoder(w).Encode(worklist) //response一个workspace
 			break
 		case "released":
-			err, worklist = post.Workspace.Release(database.DbConnection{DocDname, "workspace", nil, nil, nil})
+			err, worklist = post.Workspace.Release(database.DbConnection{DocDnameWork, "workspace", nil, nil, nil})
 			json.NewEncoder(w).Encode(worklist) //response一个workspace
 			break
 		case "delete":
-			err = post.Workspace.Remove(database.DbConnection{DocDname, "workspace", nil, nil, nil})
+			err = post.Workspace.Remove(database.DbConnection{DocDnameWork, "workspace", nil, nil, nil})
 			json.NewEncoder(w).Encode("delete success")
 			break
 		default:
@@ -204,13 +204,13 @@ func SaveSvg(w http.ResponseWriter, r *http.Request) {
 
 //更新指定的自定义分组
 func UpdateCus(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
+	CorsHeaderWork(w)
 	if "POST" == r.Method {
 		body, _ := ioutil.ReadAll(r.Body) //获取post的数据
 		cus := model.Cus{}
 		json.Unmarshal(body, &cus) //json解析
 		c := model.Cus{Divid: cus.Divid}
-		err, _ := c.Find(database.DbConnection{DocDname, "cus", nil, nil, nil})
+		err, _ := c.Find(database.DbConnection{DocDnameWork, "cus", nil, nil, nil})
 		fmt.Println("c:", c.Svg)
 		fmt.Println("cus:", cus.Svg)
 		if err == nil {
@@ -221,14 +221,14 @@ func UpdateCus(w http.ResponseWriter, r *http.Request) {
 		for i := 0; i < len(cus.Svg); i++ {
 			cus.Svg[i].Svg = strings.Replace(cus.Svg[i].Svg, ".svg", "", 1) //去.svg后缀
 		}
-		err = cus.Update(database.DbConnection{DocDname, "cus", nil, nil, nil})
+		err = cus.Update(database.DbConnection{DocDnameWork, "cus", nil, nil, nil})
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			fmt.Println(err.Error())
 			return
 		}
 		defer r.Body.Close()
-		data := Response{}
+		data := ResponseW{}
 		data.Status = "update"
 		json.NewEncoder(w).Encode(data)
 	}
@@ -236,12 +236,12 @@ func UpdateCus(w http.ResponseWriter, r *http.Request) {
 
 //获取所有的自定义分组
 func CusSvg(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
+	CorsHeaderWork(w)
 	if "GET" == r.Method {
 		svgList := []model.Cus{}
 		svg := model.Cus{}
 		var err error
-		err, svgList = svg.FindAll(database.DbConnection{DocDname, "cus", nil, nil, nil})
+		err, svgList = svg.FindAll(database.DbConnection{DocDnameWork, "cus", nil, nil, nil})
 		json.NewEncoder(w).Encode(svgList) //response一个workspace
 		if err != nil {
 			http.Error(w, err.Error(), 500)
@@ -253,37 +253,41 @@ func CusSvg(w http.ResponseWriter, r *http.Request) {
 }
 
 func FindName(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
+	CorsHeaderWork(w)
 	if "POST" == r.Method {
 		body, _ := ioutil.ReadAll(r.Body) //获取post的数据
 		work := model.WorkSpace{}
 		var name = ""
 		json.Unmarshal(body, &name) //json解析
-		res := Response{}
-		res.Status = work.FindName(database.DbConnection{DocDname, "workspace", nil, nil, nil}, name)
+		res := ResponseW{}
+		res.Status = work.FindName(database.DbConnection{DocDnameWork, "workspace", nil, nil, nil}, name)
 		json.NewEncoder(w).Encode(res) //response一个workspace
 	}
 }
 
 func AutoCode(w http.ResponseWriter, r *http.Request) {
-	CorsHeader(w)
-	if "GET" == r.Method {
+	CorsHeaderWork(w)
+	//if "GET" == r.Method {
 		work := model.WorkSpace{}
-		_, list := work.FindAll(database.DbConnection{DocDname, "workspace", nil, nil, nil})
+		_, list := work.FindAll(database.DbConnection{DocDnameWork, "workspace", nil, nil, nil})
 		var codes [] int
 		if len(list)<1{
 			json.NewEncoder(w).Encode(1)
 			return
 		}
 		for _, value := range list {
-			if strings.HasPrefix(value.Code, "TOPO_") {
+			if strings.HasPrefix(value.Code, "TOPO-") {
 				i, _ := strconv.Atoi(value.Code[5:])
 				codes = append(codes, i)
 			}
 		}
 		sort.Ints(codes)
+		if len(codes)<1{
+			json.NewEncoder(w).Encode(1)
+			return
+		}
 		json.NewEncoder(w).Encode(codes[len(codes)-1]+1)
-	}
+	//}
 }
 
 //topob部分的后台文件服务

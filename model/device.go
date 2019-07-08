@@ -5,6 +5,7 @@ import (
 	"framework-service/database"
 	"github.com/google/uuid"
 	"gopkg.in/mgo.v2/bson"
+	"math/rand"
 	"time"
 )
 
@@ -31,6 +32,16 @@ type Device struct {
 
 type DeviceSetting struct {
 	CardColor string `json:"cardcolor" form:"cardcolor" bson:"cardcolor"`
+}
+
+type Value struct {
+	T string `json:"t" bson:"t"`
+	V int `json:"v" bson:"v"`
+}
+
+type DeviceValue struct {
+	Code string `json:"code" bson:"code"`
+	Value Value `json:"value" bson:"value"`
 }
 
 const (
@@ -128,4 +139,40 @@ func (device *Device) Update() error {
 		return err
 	}
 	return nil
+}
+
+type ResData struct {
+	AttCode string      `json:"attcode" form:"attcode"`
+	Value   interface{} `json:"value" form:"value"`
+}
+
+type Res struct {
+	Device string     `json:"device" form:"device"`
+	Data   [] ResData `json:"data" form:"data"`
+}
+
+func (d *Device)GetValue() Res{
+	r := Res{}
+	for i := range d.Attrs {
+		data := ResData{}
+		data.AttCode = d.Attrs[i].Code
+		//data.Value = rand.Intn(100)
+		v:=DeviceValue{}
+		data.Value =v.Find(data.AttCode)
+		fmt.Println("VVVVVVVVVVVVVVV",data.Value)
+		r.Data = append(r.Data, data)
+	}
+	r.Device=d.Key
+	return r
+}
+
+func (v *DeviceValue)Find(code string)int{
+	db := database.DbConnection{deviceDBNAME, "deviceValCol", nil, nil, nil}
+	db.ConnDB()
+	defer db.CloseDB()
+	err := db.Collection.Find(bson.M{"code": v.Code}).One(&v)
+	if err != nil {
+		return rand.Intn(100)
+	}
+	return v.Value.V
 }
