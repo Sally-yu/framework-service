@@ -1,6 +1,7 @@
 package deal
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"framework-service/crypt"
@@ -312,6 +313,8 @@ func Decrypt(c *gin.Context) (model.User, error) {
 		fmt.Println(err.Error())
 		return user, err
 	}
+	decodeBytes, _ := base64.StdEncoding.DecodeString(user.Uname)//64位解密，处理用户名等中文字段
+	user.Uname=string(decodeBytes);
 	return user, nil
 }
 
