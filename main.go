@@ -35,32 +35,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	. "framework-service/deal" //合并导入，不需要包名引用
 	"framework-service/jwt"
-	"framework-service/model"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"strings"
-	"time"
-)
-
-
-var (
-	upgrader = websocket.Upgrader{
-		// 允许跨域
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
 )
 
 
 func main() {
 	go FileServer()//go一个文件服务
-	go WebsocketServer()//go一个ws服务
+	go WsService()//go一个ws服务 设备取值
 	engine := gin.Default()
 	//config:=cors.Default() //源码指示允许cors
 	//engine.Use(cors.Default()) //允许cors
@@ -69,62 +55,12 @@ func main() {
 	engine.Run(":9060")
 }
 
-func WebsocketServer() {
-	http.HandleFunc("/ws", DeviceValueService)
+func WsService() {
+	http.HandleFunc("/devicevalue", DeviceValueService)
+	http.HandleFunc("/notify", NotifService)
 	http.ListenAndServe("0.0.0.0:7777", nil)
 }
 
-func DeviceValueService(w http.ResponseWriter, r *http.Request) {
-	//	w.Write([]byte("hello"))
-	var (
-		wsConn *websocket.Conn
-		err    error
-		conn   *Connection
-		data   []byte
-	)
-	// 完成ws协议的握手操作
-	// Upgrade:websocket
-	if wsConn, err = upgrader.Upgrade(w, r, nil); err != nil {
-		return
-	}
-
-	if conn, err = InitConnection(wsConn); err != nil {
-		goto ERR
-	}
-	for {
-		if data, err = conn.ReadMessage(DeviceValueWS); err != nil {
-			goto ERR
-		}
-		if err = conn.WriteMessage(data); err != nil {
-			goto ERR
-		}
-	}
-
-ERR:
-	fmt.Println("conn closed")
-	conn.Close()
-
-}
-
-func DeviceValueWS(conn *Connection,data Data) { //实际是int64
-	var (
-		err error
-	)
-	for {
-		res:=[]model.Res{}
-		for k := range data.Keys {
-			r := GetAttValue(data.Keys[k])
-			res = append(res, r)
-		}
-		flow,_:=json.Marshal(res)
-		if err = conn.WriteMessage(flow); err != nil {
-			return
-		}
-		fmt.Println("aaaaa")
-		time.Sleep(data.Time * time.Second)
-
-	}
-}
 
 func Handle(e *gin.Engine) *gin.Engine {
 	e.GET("/get", Get)

@@ -159,7 +159,6 @@ func (d *Device)GetValue() Res{
 		//data.Value = rand.Intn(100)
 		v:=DeviceValue{}
 		data.Value =v.Find(data.AttCode)
-		fmt.Println("VVVVVVVVVVVVVVV",data.Value)
 		r.Data = append(r.Data, data)
 	}
 	r.Device=d.Key

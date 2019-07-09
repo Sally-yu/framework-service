@@ -1,18 +1,22 @@
 package deal
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"sync"
-	"time"
 )
 
-type Data struct {
-	Keys []string `json:"keys"`
-	Time time.Duration `json:"time"`
-}
+var (
+	upgrader = websocket.Upgrader{
+		// 允许跨域
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+)
+
 
 type Connection struct {
 	wsConnect *websocket.Conn
@@ -37,13 +41,20 @@ func InitConnection(wsConn *websocket.Conn) (conn *Connection, err error) {
 	return conn, nil
 }
 
-func (conn *Connection) ReadMessage(fun func(c *Connection,d Data)) (data []byte, err error) {
+func (conn *Connection) DeviceValueRead() (data []byte, err error) {
 
 	select {
 	case data = <-conn.inChan:
-		res:=Data{}
-		json.Unmarshal(data,&res)
-		go fun(conn,res)
+		go DeviceValueWS(conn, data)
+	case <-conn.closeChan:
+		err = errors.New("connection is closeed")
+	}
+	return
+}
+
+func (conn *Connection) NotifyRead() (data []byte, err error) {
+	select {
+	case data = <-conn.inChan:
 	case <-conn.closeChan:
 		err = errors.New("connection is closeed")
 	}
@@ -118,5 +129,70 @@ ERR:
 
 }
 
+//取设备值的ws
+func DeviceValueService(w http.ResponseWriter, r *http.Request) {
+	//	w.Write([]byte("hello"))
+	var (
+		wsConn *websocket.Conn
+		err    error
+		conn   *Connection
+		data   []byte
+	)
+	// 完成ws协议的握手操作
+	// Upgrade:websocket
+	if wsConn, err = upgrader.Upgrade(w, r, nil); err != nil {
+		return
+	}
 
+	if conn, err = InitConnection(wsConn); err != nil {
+		goto ERR
+	}
+	for {
+		if data, err = conn.DeviceValueRead(); err != nil { //取设备读的专用方法
+			goto ERR
+		}
+		if err = conn.WriteMessage(data); err != nil {
+			goto ERR
+		}
+	}
 
+ERR:
+	fmt.Println("conn closed")
+	conn.Close()
+
+}
+
+//取消息通知的ws
+func NotifService(w http.ResponseWriter, r *http.Request) {
+	var (
+		wsConn *websocket.Conn
+		err    error
+		conn   *Connection
+		data   []byte
+	)
+	// 完成ws协议的握手操作
+	// Upgrade:websocket
+	if wsConn, err = upgrader.Upgrade(w, r, nil); err != nil {
+		return
+	}
+
+	if conn, err = InitConnection(wsConn); err != nil {
+		goto ERR
+	}
+
+	go NotifyListWS(conn)
+
+	for {
+		if data, err = conn.NotifyRead(); err != nil {
+			goto ERR
+		}
+		if err = conn.WriteMessage(data); err != nil {
+			goto ERR
+		}
+	}
+
+ERR:
+	fmt.Println("conn closed")
+	conn.Close()
+
+}

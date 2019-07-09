@@ -32,8 +32,8 @@ func (db *DbConnection) ConnDB() error {
 	db.Session.SetMode(mgo.Eventual, true) //不缓存连接模式
 	db.Database = db.Session.DB(db.Dbname)
 	db.Collection = db.Database.C(db.Cname)
-	fmt.Println("connect to database:",db.Database)
-	fmt.Println("connect to collection: ",db.Collection)
+	//fmt.Println("connect to database:",db.Database)
+	//fmt.Println("connect to collection: ",db.Collection)
 	return nil
 }
 
@@ -50,5 +50,5 @@ func (db *DbConnection) SwitchCollection(cname string) {
 func (db *DbConnection) CloseDB() {
 	//连接数据库时session模式为Eventual模式，不关session也可以，不会缓存
 	defer db.Session.Close()
-	fmt.Println("close database connection ")
+	//fmt.Println("close database connection ")
 }
