@@ -5,7 +5,9 @@ import (
 	"framework-service/database"
 	"github.com/google/uuid"
 	"gopkg.in/mgo.v2/bson"
+	"math"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -27,21 +29,13 @@ type Device struct {
 	Attrs         []Attribute    `json:"attrs" form:"attrs" bson:"attrs"`                         //设备模板字段
 	Time          string         `json:"time" form:"time" bson:"time"`                            //注册时间
 	DeviceSetting DeviceSetting  `json:"devicesetting" form:"devicesetting" bson:"devicesetting"` //设备设置参数
-	Display       bool           `json:"display" form:"display" bson:"display"`
+	Display       bool           `json:"display" form:"display" bson:"display"`                   //显示卡片
+	ServerName    string         `json:"servername" form:"servername" bson:"servername"`          //服务器名称
+	ServerAddress string         `json:"serveraddress" form:"serveraddress" bson:"serveraddress"` //服务器地址
 }
 
 type DeviceSetting struct {
 	CardColor string `json:"cardcolor" form:"cardcolor" bson:"cardcolor"`
-}
-
-type Value struct {
-	T string `json:"t" bson:"t"`
-	V int `json:"v" bson:"v"`
-}
-
-type DeviceValue struct {
-	Code string `json:"code" bson:"code"`
-	Value Value `json:"value" bson:"value"`
 }
 
 const (
@@ -142,36 +136,61 @@ func (device *Device) Update() error {
 }
 
 type ResData struct {
-	AttCode string      `json:"attcode" form:"attcode"`
-	Value   interface{} `json:"value" form:"value"`
+	Code  string      `json:"attcode" bson:"code"`
+	Type  string      `json:"type" bson:"type"`
+	Value interface{} `json:"value" bson:"value"`
 }
 
 type Res struct {
-	Device string     `json:"device" form:"device"`
-	Data   [] ResData `json:"data" form:"data"`
+	Device string     `json:"device" bson:"device"`
+	Data   [] ResData `json:"data" bson:"data"`
 }
 
-func (d *Device)GetValue() Res{
+func (d *Device) GetValue() Res {
 	r := Res{}
 	for i := range d.Attrs {
 		data := ResData{}
-		data.AttCode = d.Attrs[i].Code
-		//data.Value = rand.Intn(100)
-		v:=DeviceValue{}
-		data.Value =v.Find(data.AttCode)
+		code := d.Attrs[i].Code
+		data.Code = code
+		err := data.Find()
+		if err != nil {
+			data.Value = rand.Intn(100)
+			data.Type = ""
+		}
+		fmt.Println(data)
 		r.Data = append(r.Data, data)
 	}
-	r.Device=d.Key
+	r.Device = d.Key
 	return r
 }
 
-func (v *DeviceValue)Find(code string)int{
+func (r *ResData) Find() error {
 	db := database.DbConnection{deviceDBNAME, "deviceValCol", nil, nil, nil}
 	db.ConnDB()
 	defer db.CloseDB()
-	err := db.Collection.Find(bson.M{"code": v.Code}).One(&v)
+	err := db.Collection.Find(bson.M{"code": r.Code}).One(&r)
 	if err != nil {
-		return rand.Intn(100)
+		fmt.Println(err.Error())
+		return err
 	}
-	return v.Value.V
+	switch v := r.Value.(type) { // 局部变量v是类型转换后的结果
+	case nil:
+		break
+	case int:
+		break
+	case float32:
+		break
+	case float64:
+		break
+	case string:
+		f, _ := strconv.ParseFloat(v, 64)
+		n10 := math.Pow10(2)
+		f = math.Trunc((f+0.5/n10)*n10) / n10
+		r.Value = f
+		break
+	default:
+		println("unknown")
+		break
+	}
+	return nil
 }
