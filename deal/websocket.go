@@ -17,7 +17,6 @@ var (
 	}
 )
 
-
 type Connection struct {
 	wsConnect *websocket.Conn
 	inChan    chan []byte
